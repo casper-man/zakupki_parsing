@@ -1,31 +1,89 @@
 import requests
 #import json
 from bs4 import BeautifulSoup as BS
+from prettytable import PrettyTable
+from fake_headers import Headers
 
-
-headers = {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4878.0 Safari/537.36'
-    }
+header = Headers(browser="chrome", os="win", headers=True)
 
 def get_articles(url):
-    #print("hello")
+    th = ['№','Статус','Закон','Тип','Стартовая цена','Размещено','Обновлено','Окон. подачи заявок']
+    table = PrettyTable(th)
     s = requests.session()
-    response = s.get(url=url, headers=headers)
-    soup = BS(response.text, 'lxml')
-    items = soup.find_all('div', class_='search-registry-entry-block')
+
+    pages = 1
+    page = 0
+    items = []
+
+    while page <= pages:
+        page += 1
+        response = s.get(url=f'{url}&pageNumber={page}', headers=header.generate())
+        soup = BS(response.text, 'lxml')
+        paginator = soup.find_all('a', attrs={'class':'page__link'})
+        try:
+            pages = int(paginator[-1].find('span').text)
+        except Exception as e:
+            #print(e)
+            pages = 1
+             
+        items = items + soup.find_all('div', class_='search-registry-entry-block')
+        
+        print(f'Получены данные с {page}/{pages} ')
+        if page == pages:
+            break
+
     print(f'Получено {len(items)} записей.')
-    for i in items:
+        
+    for item in range(len(items)):
+        i = items[item]
+        th = []
         types_law = i.find('div', class_='registry-entry__header-top__title').text.strip().split('\n')
         types = types_law[0].strip()
         law = types_law[1].strip()
-        print(f'|{types}_{law}|')
-                                    
+        nomber = i.find('div', class_="registry-entry__header-mid__number").find('a').get('href').split('=')[1]
+        status = i.find('div', class_="registry-entry__header-mid__title").text.strip()
+        start_price = i.find('div', class_="price-block__value").text.replace('&nbsp;','_').replace('₽','').strip()
+        dates = i.find('div', class_="data-block").find_all('div', class_='data-block__value')
+        date_cri = dates[0].text
+        date_upd = dates[1].text
+        try:
+            date_stop = dates[2].text
+        except Exception as e:
+            date_stop = None
+            #raise e 
+        object_buy = i.find('div', class_="registry-entry__body-value").text.strip()
+        #print(f'|{nomber} - ({status})\t{types}_{law}|\n|\tstart_price = {start_price} dates {date_cri},{date_upd},{date_stop}|')
+        table.add_row([nomber,status,law,types,start_price,date_cri,date_upd,date_stop])
+
+    print(table)                                
                                 
 
 def main():
-    #print("hello")
-    get_articles(url="https://zakupki.gov.ru/epz/order/extendedsearch/results.html?searchString&morphology=on&strictEqual=on&openMode=USE_DEFAULT_PARAMS&pageNumber=1&sortDirection=false&recordsPerPage=_10&showLotsInfoHidden=false&fz44=on&fz223=on&fz94=on&orderNumber&placingWaysList&placingWaysList223&priceFrom&priceTo&currencyId&participantName&publishDateFrom&publishDateTo&updateDateFrom&updateDateTo&customerTitle&customerCode&customerFz94id&customerFz223id&customerInn&agencyTitle=+...++%D0%97%D0%94%D0%A0%D0%90%D0%92%D0%9E%D0%9E%D0%A5%D0%A0%D0%90%D0%9D%D0%95%D0%9D%D0%98%D0%AF+%22%D0%A6%D0%95%D0%9D%D0%A2%D0%A0%D0%90%D0%9B%D0%AC%D0%9D%D0%90%D0%AF+%D0%93%D0%9E%D0%A0%D0%9E%D0%94%D0%A1%D0%9A%D0%90%D0%AF+%D0%91%D0%9E%D0%9B%D0%AC%D0%9D%D0%98%D0%A6%D0%90%22+%D0%93%D0%9E%D0%A0%D0%9E%D0%94%D0%90+%D0%94%D0%9E%D0%9D%D0%95%D0%A6%D0%9A%D0%90+%D0%A0%D0%9E%D0%A1%D0%A2%D0%9E%D0%92%D0%A1%D0%9A%D0%9E%D0%99+%D0%9E%D0%91%D0%9B%D0%90%D0%A1%D0%A2%D0%98&agencyCode=03583000707&agencyFz94id=688357&agencyFz223id&agencyInn=6145000407&districts&regions&af=on&ca=on&deliveryAddress&sortBy=UPDATE_DATE#")
+    state = ''
+    applying = True     # Подача заявок
+    commission = True   # Работа комиссии
+    completed = False   # Закупка завершена
+    canceled = False    # Закупка отменена
+    
+    if applying: state += '&af=on'
+    if commission: state += '&ca=on'
+    if completed: state += '&pc=on'
+    if canceled: state += '&pa=on'
+
+    laws = ''
+    fz44 = True         # 44-ФЗ
+    fz223 = True        # 223-ФЗ
+    pp615 = True        # ПП РФ 615 (Капитальный ремонт)
+    fz94 = True         # 94-ФЗ
+   
+    if fz44: laws += '&fz44=on'
+    if fz223: laws += '&fz223=on'
+    if pp615: laws += '&ppRf615=on'
+    if fz94: laws += ' &fz94=on'
+
+    inn=6145000407      # ИНН Организации
+    print(f"https://zakupki.gov.ru/epz/order/extendedsearch/results.html?searchString={inn}&recordsPerPage=_50{laws}{state}")
+    get_articles(url=f"https://zakupki.gov.ru/epz/order/extendedsearch/results.html?searchString={inn}&recordsPerPage=_50{laws}{state}")
 
 if __name__ == "__main__":
     main()
