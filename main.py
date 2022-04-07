@@ -6,8 +6,14 @@ from fake_headers import Headers
 
 header = Headers(browser="chrome", os="win", headers=True)
 
+def preview(text):
+    text_short = (text[:23] + '..') if len(text) > 25 else text
+    # if len(text) >= 30:
+    #     pass
+    return text_short
+
 def get_articles(url):
-    th = ['№','Статус','Закон','Тип','Стартовая цена','Размещено','Обновлено','Окон. подачи заявок']
+    th = ['№','Статус','Тип','Закон','Объект покупки','Стартовая цена','Размещено','Обновлено','Окончание']
     table = PrettyTable(th)
     s = requests.session()
 
@@ -38,11 +44,12 @@ def get_articles(url):
         i = items[item]
         th = []
         types_law = i.find('div', class_='registry-entry__header-top__title').text.strip().split('\n')
-        types = types_law[0].strip()
-        law = types_law[1].strip()
-        nomber = i.find('div', class_="registry-entry__header-mid__number").find('a').get('href').split('=')[1]
+        law = types_law[0].strip()
+        types = types_law[1].strip()
+        link = i.find('div', class_="registry-entry__header-mid__number").find('a').get('href')
+        id_articles = i.find('div', class_="registry-entry__header-mid__number").find('a').text.replace('№','').strip()
         status = i.find('div', class_="registry-entry__header-mid__title").text.strip()
-        start_price = i.find('div', class_="price-block__value").text.replace('&nbsp;','_').replace('₽','').strip()
+        start_price = i.find('div', class_="price-block__value").text.strip() #.replace('₽','').strip()
         dates = i.find('div', class_="data-block").find_all('div', class_='data-block__value')
         date_cri = dates[0].text
         date_upd = dates[1].text
@@ -51,9 +58,10 @@ def get_articles(url):
         except Exception as e:
             date_stop = None
             #raise e 
-        object_buy = i.find('div', class_="registry-entry__body-value").text.strip()
-        #print(f'|{nomber} - ({status})\t{types}_{law}|\n|\tstart_price = {start_price} dates {date_cri},{date_upd},{date_stop}|')
-        table.add_row([nomber,status,law,types,start_price,date_cri,date_upd,date_stop])
+        object_buy = i.find('div', class_="registry-entry__body-value").text.replace(u'\xa0','').replace('\n','').strip()
+
+        print(f'|{id_articles} - ({status})\t{types}_{law}|\n|\tstart_price = {start_price} dates {date_cri},{date_upd},{date_stop}|')
+        table.add_row([id_articles,preview(status),preview(types),law,preview(object_buy),start_price,date_cri,date_upd,date_stop])
 
     print(table)                                
                                 
@@ -63,7 +71,7 @@ def main():
     applying = True     # Подача заявок
     commission = True   # Работа комиссии
     completed = False   # Закупка завершена
-    canceled = False    # Закупка отменена
+    canceled = True    # Закупка отменена
     
     if applying: state += '&af=on'
     if commission: state += '&ca=on'
@@ -79,11 +87,12 @@ def main():
     if fz44: laws += '&fz44=on'
     if fz223: laws += '&fz223=on'
     if pp615: laws += '&ppRf615=on'
-    if fz94: laws += ' &fz94=on'
+    if fz94: laws += '&fz94=on'
 
-    inn=6145000407      # ИНН Организации
-    print(f"https://zakupki.gov.ru/epz/order/extendedsearch/results.html?searchString={inn}&recordsPerPage=_50{laws}{state}")
-    get_articles(url=f"https://zakupki.gov.ru/epz/order/extendedsearch/results.html?searchString={inn}&recordsPerPage=_50{laws}{state}")
+    searchString = 6145000407   # Строка поиска
+    url = f"https://zakupki.gov.ru/epz/order/extendedsearch/results.html?searchString={searchString}&recordsPerPage=_50{laws}{state}"
+    print(url)
+    get_articles(url=url)
 
 if __name__ == "__main__":
     main()
