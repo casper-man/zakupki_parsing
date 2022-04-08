@@ -76,8 +76,7 @@ def get_articles(url):
     paginator = soup.find_all('a', attrs={'class':'page__link'})
     try:
         pages = int(paginator[-1].find('span').text)
-    except Exception as e:
-        #print(e)
+    except:
         pages = 1
     bar = ShadyBar('Получение записей',max=pages)
     page = 0
@@ -119,9 +118,8 @@ def get_articles(url):
         date_update = dates[1].text
         try:
             date_stop = dates[2].text
-        except Exception as e:
+        except:
             date_stop = None
-            #raise e 
         object_buy = i.find('div', class_="registry-entry__body-value").text.replace(u'\xa0','').replace('\n','').strip()
         owner_link = i.find('div', class_="registry-entry__body-href").find('a').get('href')
         owner = i.find('div', class_="registry-entry__body-href").find('a').text.strip()
@@ -173,7 +171,7 @@ def main():
     laws += ('&fz94=on') if fz94 else ''
 
     searchString = 6145000407   # Строка поиска
-    #searchString = 'ПИК ИНДУСТРИЯ'   # Строка поиска
+
     url = f"https://zakupki.gov.ru/epz/order/extendedsearch/results.html?searchString={searchString}&recordsPerPage=_50{laws}{state}"
     # print(url)
     get_articles(url=url)
