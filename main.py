@@ -1,6 +1,7 @@
 import requests
 import json
 import csv
+import jinja2
 from bs4 import BeautifulSoup as BS
 from prettytable import PrettyTable
 from fake_headers import Headers
@@ -64,7 +65,32 @@ def save_csv(data):
     bar.finish()
 
 def save_html(data):
-    pass
+
+
+    templateLoader = jinja2.FileSystemLoader(searchpath="./")
+    templateEnv = jinja2.Environment(loader=templateLoader)
+    TEMPLATE_FILE = "test_template.html"
+    template = templateEnv.get_template(TEMPLATE_FILE)
+    
+    template_0 = jinja2.Template("""\
+    <title>{{ title }}</title>
+    <ul>
+    {% for user in users %}
+      <li><a href="{{ user.url }}">{{ user.username }}</a></li>
+    {% endfor %}
+    </ul>
+    """)
+
+    users = [
+        {'username': '1', 'url': 'https://a.bc/user/1'},
+        {'username': '2', 'url': 'https://a.bc/user/2'},
+        {'username': '3', 'url': 'https://a.bc/user/3'}
+    ]
+
+    html = template.render(title="Hello World!", data=data)
+    #with open(f"test_data.html", "w") as file:
+    #    file.writer(html)
+    print(html)
 
 def get_articles(url):
     th = ['№','Статус','Тип','Закон','Объект покупки','Стартовая цена','Размещено','Обновлено','Окончание']
@@ -133,7 +159,7 @@ def get_articles(url):
             'law': law,
             'types': types,
             'status': status,
-            'start_price': start_price.replace('₽','').replace(u'\xa0','').strip(),
+            'start_price': float('{:.2f}'.format(float(start_price.replace('₽','').replace(u'\xa0','').replace(',','.').strip()))),
             'date_begin': date_begin,
             'date_update': date_update,
             'date_stop': date_stop
@@ -144,7 +170,8 @@ def get_articles(url):
 
     print(table)                                
     save_csv(items_dict)                                 
-    save_json(items_dict)                               
+    save_json(items_dict)      
+    save_html(items_dict)                         
                                 
 
 def main():
