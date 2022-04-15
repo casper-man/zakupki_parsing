@@ -17,7 +17,7 @@ def preview(text):
 
 def save_json(data):
     bar = PieSpinner('save_json ')
-    with open(f"test_data.json", "w") as file:
+    with open(f"test_data.json", "w", encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
         bar.next()
     bar.finish()
@@ -25,7 +25,7 @@ def save_json(data):
 
 def save_csv(data):
     bar = ShadyBar('save_csv',max=len(data))
-    with open(f"test_data.csv", "w", newline='') as file:
+    with open(f"test_data.csv", "w", newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         writer.writerow(
             (
