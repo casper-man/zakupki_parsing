@@ -1,0 +1,140 @@
+!<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>{{ title }}</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+	<style type="text/css">
+	.torgi {
+	  
+	}
+
+	.container-fluid {
+	 max-width: 715px;
+	 margin: 0 auto 10px;
+	 border-radius: 3px 3px 3px 3px;
+	 box-shadow: 0 1px 3px rgba(17, 78, 109, 0.35);
+	background: url(http://dongb.ru/img/torgi_fon.png) no-repeat center 460px fixed;}
+
+	.torgiBox {background: rgba(255, 255, 255, 0.85);}
+	.stage {
+	 padding: 8px 0 8px 32px;
+	background: #d9edf7 url("http://zakupki.gov.ru/epz/order/extendedsearch/images/upload.png") no-repeat 8px 7px;
+	}
+
+	.customer {
+	 color: grey;
+	}
+
+	.torgi {
+	 font-size: 12px;
+	 background: #fff ;
+	}
+
+	.torgi a {
+	 color: #6B6B6B;
+	}
+
+	.torgi h3 {
+	 font-size: 16px;
+	}
+
+	h3.price {
+	 font-size: 24px;
+	}
+
+	.date {
+	 background-color: #D9EDF7;
+	 padding: 6px;
+	 margin-left: 3px;
+	}
+	.name {
+	 color: #000;
+	 font-size: 14px;
+	}
+
+	.info_block {
+	 display: block;
+	 /*position: fixed;
+	 top: 3px;
+	 right: 3px;*/
+	 background-color: rgba(192, 192, 192, 0.57);
+	 padding: 3px 6px;
+	 font-size: 10px;
+	 opacity: 0.7;
+	 box-shadow: 1px 1px 3px rgba(29, 29, 29, 0.93);
+	}
+
+	.info_block b {
+	 color: black;
+	}
+
+	.spoll {
+	  height:600px;
+	  overflow: hidden;
+	}
+	.oppen {
+	  width: 714px;
+	  margin:auto;
+	  /*text-align: center;
+	background-color: #aaa;
+	line-height: 20px;
+	font-size: 20px;
+	position: relative;*/
+	}
+	</style>
+</head>
+
+<body>
+
+	<!--ul>
+    {% for user in users %}
+      <li><a href="{{ user.url }}">{{ user.username }}</a></li>
+    {% endfor %}
+    </ul-->
+
+{% for item in data %}
+  <div class="container-fluid {{ item.id_articles }}">
+    <div class="torgiBox">
+      <div class="row">
+        <div class="col-xs-3">
+          <h3 class="type">{{ item.types }}</h3></div>
+        <div class="col-xs-7">
+          <h3><a target="_blank" class="" link="" nomber="{{ item.id_articles }}" href="{{ item.link }}">№ {{ item.id_articles }}</a></h3></div>
+        <div class="col-xs-2">
+          <h3><code>{{ item.law }}</code></h3></div>
+      </div>
+      <div class="row">
+        <div class="col-xs-3">
+          <p class="bg-info stage">Работа комиссии</p>
+        </div>
+        <div class="col-xs-6">
+          <p class="customer">{{ item.owner }}</p>
+          <p class="name">{{ item.object_buy }}</p>
+        </div>
+        <div class="col-xs-3">
+          <h3 class="price">{{ '{:,}'.format(item.start_price).replace(',', ' ') }}<br><small>Российский рубль</small></h3></div>
+      </div>
+      <div class="row">
+        <div class="col-xs-3"></div>
+        <div class="col-xs-3">
+          <p>Опубликовано:<span class="date">{{ item.date_begin }}</span></p>
+        </div>
+        <div class="col-xs-3">
+          <p>Обновлено:<span class="date">{{ item.date_update }}</span></p>
+        </div>
+        <div class="col-xs-3"></div>
+      </div>
+      <div class="row">
+        <div class="col-xs-12">
+          <p>Дата и время окончания подачи котировочных заявок: <span class="">{{ item.date_stop }}</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
+
+</body>
+</html>

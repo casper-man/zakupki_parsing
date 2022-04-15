@@ -14,6 +14,7 @@ def preview(text):
     text_short = (text[:23] + '..') if len(text) > 25 else text
     return text_short
 
+
 def save_json(data):
     bar = PieSpinner('save_json ')
     with open(f"test_data.json", "w") as file:
@@ -26,7 +27,6 @@ def save_csv(data):
     bar = ShadyBar('save_csv',max=len(data))
     with open(f"test_data.csv", "w", newline='') as file:
         writer = csv.writer(file)
-
         writer.writerow(
             (
                 'id_articles',
@@ -61,42 +61,23 @@ def save_csv(data):
                 )
             )
             bar.next()
-
     bar.finish()
 
+
 def save_html(data):
-
-
     templateLoader = jinja2.FileSystemLoader(searchpath="./")
     templateEnv = jinja2.Environment(loader=templateLoader)
-    TEMPLATE_FILE = "test_template.html"
+    TEMPLATE_FILE = "template.html"
     template = templateEnv.get_template(TEMPLATE_FILE)
-    
-    template_0 = jinja2.Template("""\
-    <title>{{ title }}</title>
-    <ul>
-    {% for user in users %}
-      <li><a href="{{ user.url }}">{{ user.username }}</a></li>
-    {% endfor %}
-    </ul>
-    """)
+    html = template.render(title="Реестр активных закупок", data=data)
+    with open(f"test_data.html", "w", encoding='utf-8') as file:
+        file.write(html)
 
-    users = [
-        {'username': '1', 'url': 'https://a.bc/user/1'},
-        {'username': '2', 'url': 'https://a.bc/user/2'},
-        {'username': '3', 'url': 'https://a.bc/user/3'}
-    ]
-
-    html = template.render(title="Hello World!", data=data)
-    #with open(f"test_data.html", "w") as file:
-    #    file.writer(html)
-    print(html)
 
 def get_articles(url):
     th = ['№','Статус','Тип','Закон','Объект покупки','Стартовая цена','Размещено','Обновлено','Окончание']
     table = PrettyTable(th)
     s = requests.session()
-
     response = s.get(url=f'{url}', headers=header.generate())
     soup = BS(response.text, 'lxml')
     paginator = soup.find_all('a', attrs={'class':'page__link'})
@@ -107,7 +88,6 @@ def get_articles(url):
     bar = ShadyBar('Получение записей',max=pages)
     page = 0
     items = []
-
     items_dict = []
 
     while page <= pages:
@@ -115,19 +95,13 @@ def get_articles(url):
         response = s.get(url=f'{url}&pageNumber={page}', headers=header.generate())
         soup = BS(response.text, 'lxml')             
         items = items + soup.find_all('div', class_='search-registry-entry-block')
-        
         #print(f'Получены данные с {page}/{pages} ')
         bar.next()
         if page == pages:
             break
 
-
     bar.finish()
     print(f'Получено {len(items)} записей.')
-        
-    # save_json(items)
-    # save_csv(items)
-    # save_html(items)
 
     for item in range(len(items)):
         i = items[item]
@@ -149,7 +123,6 @@ def get_articles(url):
         object_buy = i.find('div', class_="registry-entry__body-value").text.replace(u'\xa0','').replace('\n','').strip()
         owner_link = i.find('div', class_="registry-entry__body-href").find('a').get('href')
         owner = i.find('div', class_="registry-entry__body-href").find('a').text.strip()
-
         items_dict.append({
             'id_articles': id_articles,
             'link': f'https://zakupki.gov.ru{link}',
@@ -159,13 +132,11 @@ def get_articles(url):
             'law': law,
             'types': types,
             'status': status,
-            'start_price': float('{:.2f}'.format(float(start_price.replace('₽','').replace(u'\xa0','').replace(',','.').strip()))),
+            'start_price': float(start_price.replace('₽','').replace(u'\xa0','').replace(',','.').strip()),
             'date_begin': date_begin,
             'date_update': date_update,
             'date_stop': date_stop
         })
-
-        # print(f'|{id_articles} - ({status})\t{types}_{law}|\n|\tstart_price = {start_price} dates {date_begin},{date_update},{date_stop}|')
         table.add_row([id_articles,preview(status),preview(types),law,preview(object_buy),start_price,date_begin,date_update,date_stop])
 
     print(table)                                
@@ -198,10 +169,12 @@ def main():
     laws += ('&fz94=on') if fz94 else ''
 
     searchString = 6145000407   # Строка поиска
+    #searchString = 4101137295   # Строка поиска
 
     url = f"https://zakupki.gov.ru/epz/order/extendedsearch/results.html?searchString={searchString}&recordsPerPage=_50{laws}{state}"
-    # print(url)
+
     get_articles(url=url)
+
 
 if __name__ == "__main__":
     main()
